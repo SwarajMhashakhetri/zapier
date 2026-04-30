@@ -25,6 +25,7 @@ export const triggers = pgTable("triggers", {
   id: uuid("id").defaultRandom().primaryKey(),
   zapId: uuid("zap_id").unique().notNull(),
   triggerId: uuid("trigger_id").notNull(),
+  sortingOrder: integer("sorting_order").default(0).notNull(),
 });
 
 // Action

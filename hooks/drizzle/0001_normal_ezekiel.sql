@@ -1,0 +1,1 @@
+ALTER TABLE "triggers" ADD COLUMN "sorting_order" integer DEFAULT 0 NOT NULL;
