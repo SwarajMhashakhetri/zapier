@@ -5,7 +5,7 @@ import {
   integer,
   jsonb,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 /* -------------------- USERS -------------------- */
 export const users = pgTable("users", {
@@ -31,9 +31,12 @@ export const triggers = pgTable("triggers", {
     .unique()
     .notNull()
     .references(() => zaps.id, { onDelete: "cascade" }),
-  triggerId: uuid("trigger_id")
+  triggerId: text("trigger_id")
     .notNull()
     .references(() => availableTriggers.id),
+  metadata: jsonb("metadata")
+    .default(sql`'{}'::jsonb`)
+    .notNull(),
 });
 
 /* -------------------- ACTIONS -------------------- */
@@ -42,22 +45,25 @@ export const actions = pgTable("actions", {
   zapId: uuid("zap_id")
     .notNull()
     .references(() => zaps.id, { onDelete: "cascade" }),
-  actionId: uuid("action_id")
+  actionId: text("action_id")
     .notNull()
     .references(() => availableActions.id),
+  metadata: jsonb("metadata")
+    .default(sql`'{}'::jsonb`)
+    .notNull(),
   sortingOrder: integer("sorting_order").default(0).notNull(),
 });
 
 /* -------------------- AVAILABLE ACTIONS -------------------- */
 export const availableActions = pgTable("available_actions", {
-  id: uuid("id").defaultRandom().primaryKey(),
+  id: text("id").primaryKey(),
   name: text("name").notNull(),
   image: text("image").notNull(),
 });
 
 /* -------------------- AVAILABLE TRIGGERS -------------------- */
 export const availableTriggers = pgTable("available_triggers", {
-  id: uuid("id").defaultRandom().primaryKey(),
+  id: text("id").primaryKey(),
   name: text("name").notNull(),
   image: text("image").notNull(),
 });

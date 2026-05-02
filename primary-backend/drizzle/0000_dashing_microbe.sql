@@ -1,24 +1,28 @@
 CREATE TABLE "actions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"zap_id" uuid NOT NULL,
-	"action_id" uuid NOT NULL,
+	"action_id" text NOT NULL,
+	"metadata" jsonb DEFAULT '{}'::jsonb NOT NULL,
 	"sorting_order" integer DEFAULT 0 NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "available_actions" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"name" text NOT NULL
+	"id" text PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"image" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "available_triggers" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"name" text NOT NULL
+	"id" text PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"image" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "triggers" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"zap_id" uuid NOT NULL,
-	"trigger_id" uuid NOT NULL,
+	"trigger_id" text NOT NULL,
+	"metadata" jsonb DEFAULT '{}'::jsonb NOT NULL,
 	CONSTRAINT "triggers_zap_id_unique" UNIQUE("zap_id")
 );
 --> statement-breakpoint

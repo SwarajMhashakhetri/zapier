@@ -24,6 +24,7 @@ router.post("/", authMiddleware, async (req, res) => {
   }
 
   const zapId = await db.transaction(async (tx) => {
+    // 1. create zap
     const [zap] = await tx
       .insert(zaps)
       .values({
@@ -34,24 +35,29 @@ router.post("/", authMiddleware, async (req, res) => {
 
     if (!zap) throw new Error("Zap creation failed");
 
+    // 2. create actions
     await tx.insert(actions).values(
       parsed.data.actions.map((x, index) => ({
         zapId: zap.id,
         actionId: x.availableActionId,
         sortingOrder: index,
+        metadata: x.actionMetadata || {},
       }))
     );
 
+    // 3. create trigger
     const [trigger] = await tx
       .insert(triggers)
       .values({
         zapId: zap.id,
         triggerId: parsed.data.availableTriggerId,
+        metadata: parsed.data.triggerMetadata || {},
       })
       .returning();
 
     if (!trigger) throw new Error("Trigger creation failed");
 
+    // 4. update zap with triggerId
     await tx
       .update(zaps)
       .set({ triggerId: trigger.id })
@@ -63,33 +69,33 @@ router.post("/", authMiddleware, async (req, res) => {
   return res.json({ zapId });
 });
 
-
-/* ---------------- GET ALL ZAPS  ---------------- */
+/* ---------------- GET ALL ZAPS ---------------- */
 router.get("/", authMiddleware, async (req, res) => {
   // @ts-ignore
   const userId = parseInt(req.id);
 
-  // 1. fetch zaps
   const zapList = await db
     .select()
     .from(zaps)
     .where(eq(zaps.userId, userId));
 
-  if (zapList.length === 0) {
+  if (!zapList.length) {
     return res.json({ zaps: [] });
   }
 
   const zapIds = zapList.map((z) => z.id);
 
-  // 2. fetch actions (ordered)
+  // actions + type
   const actionRows = await db
     .select({
       zapId: actions.zapId,
       id: actions.id,
+      metadata: actions.metadata,
       sortingOrder: actions.sortingOrder,
       type: {
         id: availableActions.id,
         name: availableActions.name,
+        image: availableActions.image,
       },
     })
     .from(actions)
@@ -100,14 +106,16 @@ router.get("/", authMiddleware, async (req, res) => {
     .where(inArray(actions.zapId, zapIds))
     .orderBy(asc(actions.sortingOrder));
 
-  // 3. fetch triggers
+  // triggers + type
   const triggerRows = await db
     .select({
       zapId: triggers.zapId,
       id: triggers.id,
+      metadata: triggers.metadata,
       type: {
         id: availableTriggers.id,
         name: availableTriggers.name,
+        image: availableTriggers.image,
       },
     })
     .from(triggers)
@@ -117,7 +125,7 @@ router.get("/", authMiddleware, async (req, res) => {
     )
     .where(inArray(triggers.zapId, zapIds));
 
-  // 4. group actions
+  // group actions
   const actionsMap = new Map<string, any[]>();
   for (const row of actionRows) {
     if (!actionsMap.has(row.zapId)) {
@@ -125,21 +133,22 @@ router.get("/", authMiddleware, async (req, res) => {
     }
     actionsMap.get(row.zapId)!.push({
       id: row.id,
+      metadata: row.metadata,
       sortingOrder: row.sortingOrder,
       type: row.type,
     });
   }
 
-  // 5. map triggers
+  // map triggers
   const triggerMap = new Map<string, any>();
   for (const row of triggerRows) {
     triggerMap.set(row.zapId, {
       id: row.id,
+      metadata: row.metadata,
       type: row.type,
     });
   }
 
-  // 6. final shape
   const result = zapList.map((zap) => ({
     ...zap,
     trigger: triggerMap.get(zap.id) || null,
@@ -149,41 +158,42 @@ router.get("/", authMiddleware, async (req, res) => {
   return res.json({ zaps: result });
 });
 
-
 /* ---------------- GET SINGLE ZAP ---------------- */
 router.get("/:zapId", authMiddleware, async (req, res) => {
   // @ts-ignore
   const userId = parseInt(req.id);
-  const rawZapId = req.params.zapId;
 
+  const rawZapId = req.params.zapId;
   const zapId = Array.isArray(rawZapId) ? rawZapId[0] : rawZapId;
 
-    if (!zapId) {
-        return res.status(400).json({ error: "Invalid zapId" });
-    }
+  if (!zapId) {
+    return res.status(400).json({ error: "Invalid zapId" });
+  }
 
   const zap = await db
     .select()
     .from(zaps)
     .where(eq(zaps.id, zapId));
 
-    const zapData = zap[0];
+  const zapData = zap[0];
 
     if (!zapData) {
         return res.status(404).json({ zap: null });
     }
 
-  if (!zap.length || zapData.userId !== userId) {
+  if (!zap.length || zapData.userId !== userId){
     return res.status(404).json({ zap: null });
   }
 
   const actionRows = await db
     .select({
       id: actions.id,
+      metadata: actions.metadata,
       sortingOrder: actions.sortingOrder,
       type: {
         id: availableActions.id,
         name: availableActions.name,
+        image: availableActions.image,
       },
     })
     .from(actions)
@@ -197,9 +207,11 @@ router.get("/:zapId", authMiddleware, async (req, res) => {
   const triggerRow = await db
     .select({
       id: triggers.id,
+      metadata: triggers.metadata,
       type: {
         id: availableTriggers.id,
         name: availableTriggers.name,
+        image: availableTriggers.image,
       },
     })
     .from(triggers)
