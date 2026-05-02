@@ -1,0 +1,8 @@
+ALTER TABLE "zaps" ADD COLUMN "user_id" integer NOT NULL;--> statement-breakpoint
+ALTER TABLE "actions" ADD CONSTRAINT "actions_zap_id_zaps_id_fk" FOREIGN KEY ("zap_id") REFERENCES "public"."zaps"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "actions" ADD CONSTRAINT "actions_action_id_available_actions_id_fk" FOREIGN KEY ("action_id") REFERENCES "public"."available_actions"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "triggers" ADD CONSTRAINT "triggers_zap_id_zaps_id_fk" FOREIGN KEY ("zap_id") REFERENCES "public"."zaps"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "triggers" ADD CONSTRAINT "triggers_trigger_id_available_triggers_id_fk" FOREIGN KEY ("trigger_id") REFERENCES "public"."available_triggers"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "zap_run_outbox" ADD CONSTRAINT "zap_run_outbox_zap_run_id_zap_runs_id_fk" FOREIGN KEY ("zap_run_id") REFERENCES "public"."zap_runs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "zap_runs" ADD CONSTRAINT "zap_runs_zap_id_zaps_id_fk" FOREIGN KEY ("zap_id") REFERENCES "public"."zaps"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "zaps" ADD CONSTRAINT "zaps_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;

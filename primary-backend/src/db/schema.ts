@@ -52,12 +52,14 @@ export const actions = pgTable("actions", {
 export const availableActions = pgTable("available_actions", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
+  image: text("image").notNull(),
 });
 
 /* -------------------- AVAILABLE TRIGGERS -------------------- */
 export const availableTriggers = pgTable("available_triggers", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
+  image: text("image").notNull(),
 });
 
 /* -------------------- ZAP RUN -------------------- */
